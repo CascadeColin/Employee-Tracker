@@ -1,0 +1,26 @@
+{
+  "name": "employee-tracker",
+  "version": "1.0.0",
+  "description": "Tracks your company's employees",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CascadeColin/Employee-Tracker.git"
+  },
+  "author": "Colin Marshall",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/CascadeColin/Employee-Tracker/issues"
+  },
+  "homepage": "https://github.com/CascadeColin/Employee-Tracker#readme",
+  "dependencies": {
+    "console.table": "^0.10.0",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "inquirer": "^8.2.4",
+    "mysql2": "^2.3.3"
+  }
+}
