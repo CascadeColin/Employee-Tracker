@@ -12,12 +12,12 @@ require('dotenv').config();
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
-const db = mysql.createConnection(
-    {
-      host: 'localhost',
-      user: process.env.USER,
-      password: process.env.PASS,
-      database: process.env.DB
-    },
-    console.log(`Connected to the ${process.env.DB} database.`)
-  );
+// const db = mysql.createConnection(
+//     {
+//       host: 'localhost',
+//       user: process.env.USER,
+//       password: process.env.PASS,
+//       database: process.env.DB
+//     },
+//     console.log(`Connected to the ${process.env.DB} database.`)
+//   );
