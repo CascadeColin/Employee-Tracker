@@ -1,6 +1,7 @@
 # local files for assignment
 .instructions/
 assets/
+.DS_Store
 
 # Logs
 logs
