@@ -18,4 +18,5 @@ const db = mysql.createConnection(
     console.log(`Connected to the ${process.env.DB} database.`)
   );
 
+
 // use prepared statements to protect against SQL injection
