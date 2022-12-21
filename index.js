@@ -19,8 +19,8 @@ const choices = ["View All Employees", "Add Employee", "Update Employee Role", "
 // welcome message for non-tech clients
 console.info("\x1b[4m%s\x1b[0m", "\n\nWelcome to Employee Tracker!\n\n");
 
-const init = async () => {
-  await inquirer.prompt([
+const mainMenu = () => {
+  inquirer.prompt([
     {
       type: "list",
       message: "What would you like to do?",
@@ -29,10 +29,10 @@ const init = async () => {
       loop: true,
     },
   ])
-  .then(async (response) => {
+  .then(response => {
     switch (`${response.menu}`) {
       case "View All Employees":
-        console.log("View All Employees");
+        viewEmployees();
         break;
       case "Add Employee":
         console.log("Add Employee");
@@ -41,49 +41,100 @@ const init = async () => {
         console.log("Update Employee Role");
         break;
       case "View All Roles":
-        console.log("View All Roles");
+        viewRoles();
         break;
       case "Add Role":
         console.log("Add Role");
         break;
       case "View All Departments":
-        await viewDepartments();
+        viewDepartments();
         break;
       case "Add Department":
-        console.log("Add Department");
+        addDepartment();
         break;
       case "Quit":
-        console.info("\x1b[4m%s\x1b[0m", "\n\nThank you for choosing Employee Tracker!");
+        console.info("\x1b[4m%s\x1b[0m", "\nThank you for choosing Employee Tracker!");
         closeApp();
         break;
     }
   })
 }
-init();
 
 // use prepared statements to protect against SQL injection
 
-const viewEmployees = () => {}
+//FIXME: show manager name instead of ID
+const viewEmployees = () => {
+  // SQL to be queried
+  const employeesFormatted = 'SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name, role.salary, employee.manager_id FROM employee JOIN role ON employee.role_id = role.id JOIN department ON role.department_id = department.id ORDER BY id ASC;'
+  // async query that performs SQL query, catches error, then returns to the main menu
+  db.promise().query(employeesFormatted)
+  .then(([rows,fields]) => {
+    // adds white space for readability
+    console.info("\n");
+    console.table(rows);
+  })
+  .catch(console.info("Something went wrong"))
+  .then(() => mainMenu());
+}
 
 const addEmployee = () => {}
 
 const updateEmployeeRole = () => {}
 
-const viewRoles = () => {}
+const viewRoles = () => {
+  // SQL to be queried
+  const rolesFormatted = "SELECT role.id, role.title, department.name, role.salary FROM role JOIN department ON role.department_id = department.id ORDER BY id ASC;"
+  // async query that performs SQL query, catches error, then returns to the main menu
+  db.promise().query(rolesFormatted)
+  .then(([rows,fields]) => {
+    // adds white space for readability
+    console.info("\n");
+    console.table(rows);
+  })
+  .catch(console.info("Something went wrong"))
+  .then(() => mainMenu());
+}
 
 const addRole = () => {}
 
 const viewDepartments = () => {
-  db.promise().query('select * from department')
+  // SQL to be queried
+  const depFormatted = "SELECT * FROM department ORDER BY id ASC;";
+  // async query that performs SQL query, catches error, then returns to the main menu
+  db.promise().query(depFormatted)
     .then(([rows,fields]) => {
-      console.log(rows);
+      // adds white space for readability
+      console.info("\n");
+      console.table(rows);
     })
-    .catch(console.log)
-    .then(() => init());
+    .catch(console.info("Something went wrong"))
+    .then(() => mainMenu());
 }
 
-const addDepartment = () => {}
+const addDepartment = () => {
+  // prompt user for input, add user input to db, return to main menu
+  inquirer.prompt([
+    {
+      type: "input",
+      message: "What is the name of the department?",
+      name: "department",
+      // input must be less than 30 due to MySQL db specifying varchar(30)
+      validate: async (input) => {
+        if (input.length >= 30) return "Please limit names to 30 characters."
+        return true;
+      }
+    }
+  ]).then(response => {
+    console.info(response.department)
+    db.promise().query(`INSERT into department (name) VALUES (?)`, [response.department])
+      .catch(console.info("Adding department failed!"))
+      .then(console.info("Department added succcessfully!"));
+  }).then(() => mainMenu());
+}
 
+// cleanly exits node application
 const closeApp = () => {
   process.exit();
 }
+
+mainMenu();
