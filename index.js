@@ -44,7 +44,7 @@ const mainMenu = () => {
         viewRoles();
         break;
       case "Add Role":
-        console.log("Add Role");
+        addRole();
         break;
       case "View All Departments":
         viewDepartments();
@@ -65,7 +65,7 @@ const mainMenu = () => {
 //FIXME: show manager name instead of ID
 const viewEmployees = () => {
   // SQL to be queried
-  const employeesFormatted = 'SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name, role.salary, employee.manager_id FROM employee JOIN role ON employee.role_id = role.id JOIN department ON role.department_id = department.id ORDER BY id ASC;'
+  const employeesFormatted = 'SELECT a.id, a.first_name, a.last_name, role.title, department.name, role.salary, a.manager_id FROM employee a JOIN role ON a.role_id = role.id JOIN department ON role.department_id = department.id ORDER BY id ASC;'
   // async query that performs SQL query, catches error, then returns to the main menu
   db.promise().query(employeesFormatted)
   .then(([rows,fields]) => {
@@ -73,7 +73,6 @@ const viewEmployees = () => {
     console.info("\n");
     console.table(rows);
   })
-  .catch(console.info("Something went wrong"))
   .then(() => mainMenu());
 }
 
@@ -91,11 +90,45 @@ const viewRoles = () => {
     console.info("\n");
     console.table(rows);
   })
-  .catch(console.info("Something went wrong"))
   .then(() => mainMenu());
 }
 
-const addRole = () => {}
+// FIXME: I have no idea how to use choices as a function and the documentation is not useful.  Searched google for half a day.  I'm stumped.
+const addRole = () => {
+  inquirer.prompt([
+    {
+      type: "input",
+      message: "What is the name of the role?",
+      name: "role",
+      // input must be less than 30 due to MySQL db specifying varchar(30)
+      validate: async (input) => {
+        if (input.length >= 30) return "Please limit names to 30 characters."
+        return true;
+      }
+    },
+    {
+      type: "input",
+      message: "What is the salary of the role?",
+      name: "salary",
+    },
+    {
+      type: "list",
+      message: "Which department does the role belong to?",
+      name: "department",
+      // FIXME: choices needs a returned promise containing department table names (see viewDepartment())
+      choices(arr) {
+        return new Promise((resolve, reject) => {
+          const departmentArr = getDepartments();
+          if (departmentArr) resolve(arr = departmentArr);
+          reject("Something went wrong");
+        })
+        .then(function(value) {arr = value}, function(err) {err})
+      }
+    }
+  ]).then(response => {
+    console.log(response.role, response.salary, response.department)
+  })
+}
 
 const viewDepartments = () => {
   // SQL to be queried
@@ -107,8 +140,18 @@ const viewDepartments = () => {
       console.info("\n");
       console.table(rows);
     })
-    .catch(console.info("Something went wrong"))
     .then(() => mainMenu());
+}
+
+// specifically for addRole() inquirer prompt
+const getDepartments = () => {
+  // SQL to be queried
+  const depFormatted = "SELECT * FROM department ORDER BY id ASC;";
+  // async query that performs SQL query and returns department names
+  db.promise().query(depFormatted)
+    .then(([rows,fields]) => {
+      return rows.map(({name}) => name);
+  });
 }
 
 const addDepartment = () => {
@@ -126,6 +169,7 @@ const addDepartment = () => {
     }
   ]).then(response => {
     console.info(response.department)
+    // prepared statement to protect against SQL injection
     db.promise().query(`INSERT into department (name) VALUES (?)`, [response.department])
       .catch(console.info("Adding department failed!"))
       .then(console.info("Department added succcessfully!"));
